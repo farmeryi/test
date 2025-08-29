@@ -1,0 +1,1233 @@
+  <!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>塗色畫</title>
+<style>
+  body { 
+    margin: 0; 
+    padding: 0;
+    font-family: Arial, sans-serif; 
+    background: #f0f0f0;
+    min-height: 100vh;
+    overflow-x: auto;
+    touch-action: auto;
+  }
+  
+  .header {
+    text-align: center;
+    padding: 10px 0;
+    background: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 10;
+    width: 100vw;
+    box-sizing: border-box;
+  }
+  
+  .controls { 
+    margin: 10px 0; 
+    padding: 0 10px;
+    display: flex; 
+    flex-wrap: wrap; 
+    justify-content: center; 
+    gap: 5px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .color-btn { 
+    width: 30px; 
+    height: 30px; 
+    display: inline-block; 
+    cursor: pointer; 
+    border: 1px solid #ccc; 
+    border-radius: 3px;
+  }
+  
+  .main-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: calc(100vh - 200px);
+    padding: 20px 0 50px 0;
+    box-sizing: border-box;
+  }
+  
+  #canvasContainer { 
+    position: relative;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    touch-action: none;
+    overflow: visible;
+    min-height: 400px;
+  }
+  
+  canvas { 
+    border: 2px solid #333;
+    position: absolute !important; 
+    top: 0 !important; 
+    left: 0 !important; 
+    touch-action: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border-radius: 5px;
+    transform-origin: center center;
+    transition: none;
+    display: block !important;
+    z-index: 1;
+  }
+  
+  .upload-section { 
+    margin: 10px 0; 
+    padding: 10px; 
+    background: white; 
+    border-radius: 5px; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .upload-btn { 
+    margin: 5px; 
+    padding: 8px 15px; 
+    background: #4CAF50; 
+    color: white; 
+    border: none; 
+    border-radius: 4px; 
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .upload-btn:hover { 
+    background: #45a049; 
+  }
+  
+  .upload-btn.bg { 
+    background: #2196F3; 
+  }
+  
+  .upload-btn.bg:hover { 
+    background: #0b7dda; 
+  }
+  
+  .layer-info { 
+    margin: 5px; 
+    font-size: 12px; 
+    color: #666; 
+  }
+  
+  .control-btn {
+    margin: 5px;
+    padding: 8px 12px;
+    background: #555;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .control-btn:hover {
+    background: #333;
+  }
+  
+  .slider-container {
+    display: flex;
+    align-items: center;
+    margin: 5px;
+    gap: 10px;
+  }
+  
+  .slider-container input[type="range"] {
+    width: 100px;
+  }
+  
+  .sample-images-section {
+    margin: 5px 0;
+    padding: 5px;
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .section-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+    text-align: center;
+  }
+  
+  .sample-images-container {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .sample-image-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+  }
+  
+  .sample-image-item:hover {
+    background-color: #f0f8ff;
+    border-color: #2196F3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
+  
+  .sample-thumbnail {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background: white;
+    padding: 4px;
+  }
+  
+  .sample-label {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+    text-align: center;
+  }
+  
+  .sample-image-item:hover .sample-label {
+    color: #2196F3;
+    font-weight: bold;
+  }
+  
+  @media (max-width: 768px) { 
+    .color-btn { width: 25px; height: 25px; }
+    .main-container {
+      padding: 15px 0 30px 0;
+    }
+    .upload-btn, .control-btn {
+      font-size: 12px;
+      padding: 6px 10px;
+    }
+    .sample-thumbnail {
+      width: 50px;
+      height: 50px;
+    }
+    .sample-images-container {
+      gap: 0px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .controls {
+      margin: 5px 0;
+      padding: 0 5px;
+      gap: 3px;
+    }
+    .upload-section {
+      margin: 5px 0;
+      padding: 8px;
+    }
+    .sample-images-section {
+      margin: 5px 0;
+      padding: 5px;
+    }
+    .main-container {
+      padding: 10px 0 20px 0;
+    }
+    .sample-thumbnail {
+      width: 50px;
+      height: 50px;
+    }
+    .section-title {
+      font-size: 14px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h2>一起來塗色吧！</h2>
+ 
+  <div class="sample-images-section">
+    <div class="section-title">小種子變大樹</div>
+    <div class="sample-images-container">
+      <div class="sample-image-item" onclick="loadSampleImageTest(1)">
+        <img src="https://i.postimg.cc/m25CXL6w/seed1.png" alt="範例圖片 1" class="sample-thumbnail">
+        <span class="sample-label">第一頁</span>
+      </div>
+      <div class="sample-image-item" onclick="loadSampleImageTest(2)">
+        <img src="https://i.postimg.cc/prnyx8wq/seed2.png" alt="範例圖片 2" class="sample-thumbnail">
+        <span class="sample-label">第二頁</span>
+      </div>
+      <div class="sample-image-item" onclick="loadSampleImageTest(3)">
+        <img src="https://i.postimg.cc/Px7NBKRC/seed3.png" alt="範例圖片 3" class="sample-thumbnail">
+        <span class="sample-label">第三頁</span>
+      </div>
+      <div class="sample-image-item" onclick="loadSampleImageTest(4)">
+        <img src="https://i.postimg.cc/d04h9JRm/seed4.png" alt="範例圖片 4" class="sample-thumbnail">
+        <span class="sample-label">第四頁</span>
+      </div>
+      <div class="sample-image-item" onclick="loadSampleImageTest(5)">
+        <img src="https://i.postimg.cc/XXSqvq33/seed5.png" alt="範例圖片 5" class="sample-thumbnail">
+        <span class="sample-label">第五頁</span>
+      </div>
+      <div class="sample-image-item" onclick="loadSampleImageTest(6)">
+        <img src="https://i.postimg.cc/WpQwZ71p/seed6.png" alt="範例圖片 6" class="sample-thumbnail">
+        <span class="sample-label">第六頁</span>
+      </div>
+      <div class="sample-image-item" onclick="loadSampleImageTest(7)">
+        <img src="https://i.postimg.cc/h4J0hYg3/seed7.png" alt="範例圖片 7" class="sample-thumbnail">
+        <span class="sample-label">第七頁</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="upload-section">
+    <div class="section-title">上傳自己想畫的圖~</div>
+    <div class="layer-info">圖層順序(底-上)：背景圖 → 畫筆繪圖 → 去背圖(png檔)</div>
+    <input type="file" id="uploadBg" accept="image/*" style="display:none" onchange="uploadBackgroundImage(event)">
+    <button class="upload-btn bg" onclick="document.getElementById('uploadBg').click()">上傳背景圖</button>
+    
+    <input type="file" id="uploadOverlay" accept="image/*" style="display:none" onchange="uploadOverlayImage(event)">
+    <button class="upload-btn" onclick="document.getElementById('uploadOverlay').click()">上傳去背圖</button>
+    
+    <button class="upload-btn bg" onclick="clearBackground()">清除背景圖</button>
+    <button class="upload-btn" onclick="clearOverlay()">清除去背圖</button>
+  </div>
+
+  <div class="controls" id="colorPalette"></div>
+  <div class="controls">
+    <button class="control-btn" onclick="setEraser()">橡皮擦</button>
+    <div class="slider-container">
+      <label>粗細 </label>
+      <input type="range" id="lineWidth" min="1" max="20" value="1" onchange="changeLineWidth(this.value)">
+      <span id="lineWidthValue">1</span>
+    </div>
+    <button class="control-btn" onclick="undo()">復原</button>
+    <button class="control-btn" onclick="redo()">重做</button>
+    <button class="control-btn" onclick="clearDraw()">清除畫筆</button>
+    <button class="control-btn" onclick="downloadCanvas()">下載成品</button>
+  </div>
+
+
+</div>
+
+<div class="main-container">
+  <div id="canvasContainer">
+    <canvas id="bgCanvas"></canvas>
+    <canvas id="drawCanvas"></canvas>
+    <canvas id="overlayCanvas"></canvas>
+  </div>
+</div>
+
+<script>
+const bgCanvas = document.getElementById("bgCanvas");
+const drawCanvas = document.getElementById("drawCanvas");
+const overlayCanvas = document.getElementById("overlayCanvas");
+
+const bgCtx = bgCanvas.getContext("2d");
+const ctx = drawCanvas.getContext("2d");
+const overlayCtx = overlayCanvas.getContext("2d");
+
+let drawing = false;
+let currentColor = "black";
+let lineWidth = 1;
+let isEraser = false;
+let history = [];
+let redoHistory = [];
+let lastPos = {x:0,y:0};
+let bgImage = null;
+let overlayImage = null;
+
+// 雙指手勢相關變數
+let lastTouchDistance = 0;
+let lastTouchCenter = {x: 0, y: 0};
+let initialPinchDistance = 0;
+let isPinching = false;
+let touchStartTime = 0;
+let multiTouchActive = false;
+let lastTouchEndTime = 0;
+let justFinishedMultiTouch = false;
+
+// 畫布縮放和位置相關變數
+let canvasScale = 1;
+let canvasOffsetX = 0;
+let canvasOffsetY = 0;
+let minScale = 0.5;
+let maxScale = 3;
+
+// 更新畫布變換
+function updateCanvasTransform() {
+  const transform = `translate(${canvasOffsetX}px, ${canvasOffsetY}px) scale(${canvasScale})`;
+  [bgCanvas, drawCanvas, overlayCanvas].forEach(canvas => {
+    canvas.style.transform = transform;
+  });
+}
+
+// 響應式畫布調整
+function resizeCanvas(){
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  
+  let width, height;
+  
+  if (bgImage) {
+    // 有背景圖片時，根據圖片比例調整
+    const imgAspect = bgImage.width / bgImage.height;
+    
+    // 寬度設為視窗寬度
+    width = viewportWidth;
+    height = width / imgAspect;
+    
+    // 如果高度超過視窗高度的80%，則調整
+    const maxHeight = viewportHeight * 0.8;
+    if (height > maxHeight) {
+      height = maxHeight;
+      width = height * imgAspect;
+    }
+  } else {
+    // 沒有背景圖片時，使用視窗寬度和4:3比例
+    width = viewportWidth;
+    height = width * 0.75; // 4:3比例
+    
+    // 確保高度不超過視窗的80%
+    const maxHeight = viewportHeight * 0.8;
+    if (height > maxHeight) {
+      height = maxHeight;
+      width = height * (4/3);
+    }
+  }
+  
+  [bgCanvas, drawCanvas, overlayCanvas].forEach(c => {
+    c.width = width;
+    c.height = height;
+    c.style.width = width + 'px';
+    c.style.height = height + 'px';
+    // 確保畫布可見
+    c.style.display = 'block';
+    c.style.position = 'absolute';
+    c.style.top = '0px';
+    c.style.left = '0px';
+  });
+  
+  // 重置縮放和位置
+  canvasScale = 1;
+  canvasOffsetX = 0;
+  canvasOffsetY = 0;
+  
+  // 確保變換正確應用
+  updateCanvasTransform();
+  
+  // 設置白色預設背景
+  bgCtx.fillStyle = '#FFFFFF';
+  bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+  
+  redrawBackground();
+  redrawDrawLayer();
+  redrawOverlay();
+}
+
+window.addEventListener('resize', resizeCanvas);
+window.addEventListener('orientationchange', function() {
+  setTimeout(resizeCanvas, 100);
+});
+
+// 計算兩點間距離
+function getTouchDistance(touch1, touch2) {
+  const dx = touch1.clientX - touch2.clientX;
+  const dy = touch1.clientY - touch2.clientY;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+// 計算兩點中心點
+function getTouchCenter(touch1, touch2) {
+  return {
+    x: (touch1.clientX + touch2.clientX) / 2,
+    y: (touch1.clientY + touch2.clientY) / 2
+  };
+}
+
+// 觸控與滑鼠事件
+function getPos(e){
+  const rect = drawCanvas.getBoundingClientRect();
+  let clientX, clientY;
+  if(e.touches && e.touches.length === 1){ 
+    clientX = e.touches[0].clientX; 
+    clientY = e.touches[0].clientY;
+  } else { 
+    clientX = e.clientX; 
+    clientY = e.clientY;
+  }
+  
+  // 考慮畫布的縮放和偏移
+  const x = (clientX - rect.left) / canvasScale;
+  const y = (clientY - rect.top) / canvasScale;
+  
+  return { 
+    x: x * (drawCanvas.width / (rect.width / canvasScale)),
+    y: y * (drawCanvas.height / (rect.height / canvasScale))
+  };
+}
+
+function startDraw(e){
+  touchStartTime = Date.now();
+  
+  // 檢查是否為雙指觸控
+  if(e.touches && e.touches.length >= 2) {
+    // 雙指操作 - 不阻止預設行為讓瀏覽器處理縮放
+    isPinching = true;
+    multiTouchActive = true;
+    justFinishedMultiTouch = false;
+    
+    // 記錄雙指初始狀態
+    const touch1 = e.touches[0];
+    const touch2 = e.touches[1];
+    lastTouchDistance = getTouchDistance(touch1, touch2);
+    lastTouchCenter = getTouchCenter(touch1, touch2);
+    
+    // 停止任何正在進行的繪圖
+    if(drawing) {
+      drawing = false;
+      ctx.closePath();
+    }
+    return;
+  }
+  
+  // 單指觸控的處理
+  if(e.touches && e.touches.length === 1) {
+    // 檢查是否剛結束雙指操作
+    if(justFinishedMultiTouch) {
+      return; // 在保護期內，不開始繪圖
+    }
+    
+    // 開始單指繪圖
+    e.preventDefault();
+    drawing = true;
+    multiTouchActive = false;
+    lastPos = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(lastPos.x, lastPos.y);
+    return;
+  }
+  
+  // 滑鼠事件（桌面版）
+  if(!e.touches) {
+    e.preventDefault();
+    drawing = true;
+    multiTouchActive = false;
+    lastPos = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(lastPos.x, lastPos.y);
+  }
+}
+
+function draw(e){
+  // 雙指手勢處理 - 縮放和拖動畫布
+  if(e.touches && e.touches.length >= 2) {
+    isPinching = true;
+    multiTouchActive = true;
+    
+    // 停止任何正在進行的繪圖
+    if(drawing) {
+      drawing = false;
+      ctx.closePath();
+    }
+    
+    const touch1 = e.touches[0];
+    const touch2 = e.touches[1];
+    const currentDistance = getTouchDistance(touch1, touch2);
+    const currentCenter = getTouchCenter(touch1, touch2);
+    
+    if(lastTouchDistance > 0 && lastTouchCenter.x > 0) {
+      // 計算縮放
+      const scaleChange = currentDistance / lastTouchDistance;
+      const newScale = canvasScale * scaleChange;
+      
+      // 限制縮放範圍
+      if(newScale >= minScale && newScale <= maxScale) {
+        canvasScale = newScale;
+      }
+      
+      // 計算拖動
+      const deltaX = currentCenter.x - lastTouchCenter.x;
+      const deltaY = currentCenter.y - lastTouchCenter.y;
+      
+      canvasOffsetX += deltaX;
+      canvasOffsetY += deltaY;
+      
+      // 更新畫布變換
+      updateCanvasTransform();
+    }
+    
+    lastTouchDistance = currentDistance;
+    lastTouchCenter = currentCenter;
+    return; // 不進行繪圖
+  }
+  
+  // 單指繪圖
+  if(!drawing || isPinching) return;
+  
+  const pos = getPos(e);
+  ctx.lineWidth = lineWidth;
+  ctx.lineCap = "round";
+  ctx.strokeStyle = currentColor;
+  ctx.globalCompositeOperation = isEraser ? 'destination-out' : 'source-over';
+  ctx.beginPath();
+  ctx.moveTo(lastPos.x, lastPos.y);
+  ctx.lineTo(pos.x, pos.y);
+  ctx.stroke();
+  lastPos = pos;
+}
+
+function stopDraw(e){
+  lastTouchEndTime = Date.now();
+  
+  // 雙指操作結束
+  if(isPinching) {
+    isPinching = false;
+    lastTouchDistance = 0;
+    justFinishedMultiTouch = true;
+    
+    // 設置保護期，防止立即切換到單指繪圖
+    setTimeout(() => {
+      justFinishedMultiTouch = false;
+      multiTouchActive = false;
+    }, 300);
+    return;
+  }
+  
+  // 檢查是否還有觸控點
+  if(e.touches && e.touches.length > 0) {
+    return;
+  }
+  
+  // 單指繪圖結束
+  if(drawing) {
+    drawing = false;
+    ctx.closePath();
+    saveHistory();
+  }
+  
+  // 單指操作結束，立即重置狀態
+  if(!e.touches || e.touches.length === 0) {
+    multiTouchActive = false;
+  }
+}
+
+// 事件監聽器綁定
+drawCanvas.addEventListener("mousedown", startDraw);
+drawCanvas.addEventListener("mousemove", draw);
+drawCanvas.addEventListener("mouseup", stopDraw);
+drawCanvas.addEventListener("mouseout", stopDraw);
+drawCanvas.addEventListener("touchstart", startDraw, {passive:false});
+drawCanvas.addEventListener("touchmove", draw, {passive:false});
+drawCanvas.addEventListener("touchend", stopDraw, {passive:false});
+
+overlayCanvas.addEventListener("mousedown", startDraw);
+overlayCanvas.addEventListener("mousemove", draw);
+overlayCanvas.addEventListener("mouseup", stopDraw);
+overlayCanvas.addEventListener("mouseout", stopDraw);
+overlayCanvas.addEventListener("touchstart", startDraw, {passive:false});
+overlayCanvas.addEventListener("touchmove", draw, {passive:false});
+overlayCanvas.addEventListener("touchend", stopDraw, {passive:false});
+
+// 顏色與橡皮擦
+function setColor(color){ currentColor=color; isEraser=false; }
+function setEraser(){ isEraser=true; }
+
+// 粗細調整
+function changeLineWidth(value){ 
+  lineWidth = value; 
+  document.getElementById('lineWidthValue').textContent = value;
+}
+
+// 清除畫筆層
+function clearDraw(){
+  ctx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
+  saveHistory();
+}
+
+// 歷史紀錄
+function saveHistory(){
+  const imgData = drawCanvas.toDataURL();
+  history.push(imgData);
+  redoHistory = [];
+  if(history.length > 50) history.shift();
+}
+
+// 復原
+function undo(){
+  if(history.length>1){
+    redoHistory.push(history.pop());
+    const img = new Image();
+    img.src = history[history.length-1];
+    img.onload = ()=>{
+      ctx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
+      ctx.drawImage(img,0,0,drawCanvas.width,drawCanvas.height);
+    }
+  }
+}
+
+// 重做
+function redo(){
+  if(redoHistory.length>0){
+    const imgData = redoHistory.pop();
+    const img = new Image();
+    img.src = imgData;
+    img.onload = ()=>{
+      ctx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
+      ctx.drawImage(img,0,0,drawCanvas.width,drawCanvas.height);
+    }
+    history.push(imgData);
+  }
+}
+
+// 上傳背景圖片
+function uploadBackgroundImage(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  
+  if(!file.type.startsWith('image/')){
+    alert('請選擇圖片文件！');
+    event.target.value = '';
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      bgImage = img;
+      resizeCanvas(); // 重新調整畫布尺寸以配合圖片
+    };
+    img.onerror = function() {
+      alert('圖片載入失敗，請檢查文件格式！');
+    };
+    img.src = e.target.result;
+  };
+  reader.onerror = function() {
+    alert('文件讀取失敗！');
+  };
+  reader.readAsDataURL(file);
+  
+  event.target.value = '';
+}
+
+
+// 上傳覆蓋圖片（去背 PNG）- 支援文件和網路圖片
+function uploadOverlayImage(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  
+  if(!file.type.startsWith('image/')){
+    alert('請上傳圖片文件（建議使用 PNG 格式以保持透明效果）！');
+    event.target.value = '';
+    return;
+  }
+  
+  console.log('上傳去背圖片:', file.name, file.type, file.size);
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      console.log('去背圖片載入成功:', img.width, 'x', img.height);
+      overlayImage = img;
+      redrawOverlay();
+      
+      // 清除範例圖片的選中狀態
+      clearSampleSelection();
+    };
+    img.onerror = function() {
+      console.error('圖片載入失敗');
+      alert('圖片載入失敗，請檢查文件格式！');
+    };
+    img.src = e.target.result;
+  };
+  reader.onerror = function() {
+    console.error('文件讀取失敗');
+    alert('文件讀取失敗！');
+  };
+  reader.readAsDataURL(file);
+  
+  // 清空輸入框
+  event.target.value = '';
+}
+
+// 載入網路圖片到覆蓋層（去背層）
+function loadNetworkImageToOverlay(imageUrl, imageId = null) {
+  console.log('=== 載入網路圖片到去背層 ===');
+  console.log('圖片網址:', imageUrl);
+  console.log('圖片ID:', imageId);
+  
+  const img = new Image();
+  img.crossOrigin = 'anonymous'; // 加入跨域支援
+  
+  img.onload = function() {
+    console.log('✅ 網路圖片載入成功!', {
+      url: imageUrl,
+      width: img.width,
+      height: img.height,
+      complete: img.complete
+    });
+    
+    // 使用與上傳檔案相同的邏輯
+    overlayImage = img;
+    redrawOverlay();
+    
+    // 更新選中狀態
+    if(imageId) {
+      updateSampleSelection(imageId);
+    }
+    
+    console.log('✅ 網路圖片已載入到去背層！');
+  };
+  
+  img.onerror = function(error) {
+    console.error('❌ 網路圖片載入失敗:', error);
+    
+    // 嘗試不使用跨域設定
+    const img2 = new Image();
+    
+    img2.onload = function() {
+      console.log('✅ 備用方案載入成功!');
+      overlayImage = img2;
+      redrawOverlay();
+      if(imageId) updateSampleSelection(imageId);
+    };
+    
+    img2.onerror = function() {
+      console.error('❌ 備用方案也載入失敗');
+      
+      // 嘗試備用網址格式
+      const alternativeUrl = imageUrl.includes('github.com') 
+        ? imageUrl.replace('github.com', 'raw.githubusercontent.com').replace('/raw/', '/')
+        : imageUrl.replace('raw.githubusercontent.com', 'github.com').replace(/\/([^\/]+)\/([^\/]+)\/(.+)/, '/$1/$2/raw/$3');
+      
+      if(alternativeUrl !== imageUrl) {
+        console.log('嘗試備用網址:', alternativeUrl);
+        const img3 = new Image();
+        img3.crossOrigin = 'anonymous';
+        
+        img3.onload = function() {
+          console.log('✅ 備用網址載入成功!');
+          overlayImage = img3;
+          redrawOverlay();
+          if(imageId) updateSampleSelection(imageId);
+        };
+        
+        img3.onerror = function() {
+          alert('範例圖片載入失敗，請檢查網路連線或稍後再試！');
+        };
+        
+        img3.src = alternativeUrl;
+      } else {
+        alert('範例圖片載入失敗，請檢查網路連線或稍後再試！');
+      }
+    };
+    
+    img2.src = imageUrl;
+  };
+  
+  // 開始載入
+  img.src = imageUrl;
+}
+
+// 更新範例圖片選中狀態
+function updateSampleSelection(imageId) {
+  // 清除所有選中狀態
+  clearSampleSelection();
+  
+  // 標記當前選中的項目
+  const items = document.querySelectorAll('.sample-image-item');
+  const currentItem = items[imageId - 1];
+  if(currentItem) {
+    currentItem.style.borderColor = '#4CAF50';
+    currentItem.style.backgroundColor = '#f0f8f0';
+    console.log('已標記選中狀態，圖片ID:', imageId);
+  }
+}
+
+// 清除範例圖片選中狀態
+function clearSampleSelection() {
+  const items = document.querySelectorAll('.sample-image-item');
+  items.forEach(item => {
+    item.style.borderColor = 'transparent';
+    item.style.backgroundColor = '';
+  });
+}
+
+// 測試用的簡化載入函數 - 現在使用統一的載入邏輯
+function loadSampleImageTest(imageId) {
+  console.log('=== 點選範例圖片 ===');
+  console.log('圖片ID:', imageId);
+  
+  // 定義範例圖片網址
+  const imageUrls = {
+    1: 'https://i.postimg.cc/m25CXL6w/seed1.png',
+    2: 'https://i.postimg.cc/prnyx8wq/seed2.png',
+    3: 'https://i.postimg.cc/Px7NBKRC/seed3.png',
+    4: 'https://i.postimg.cc/d04h9JRm/seed4.png',
+    5: 'https://i.postimg.cc/XXSqvq33/seed5.png',
+    6: 'https://i.postimg.cc/WpQwZ71p/seed6.png',
+    7: 'https://i.postimg.cc/h4J0hYg3/seed7.png'
+  };
+  
+  const imageUrl = imageUrls[imageId];
+  if (!imageUrl) {
+    console.error('找不到對應的圖片網址');
+    return;
+  }
+  
+  // 使用統一的載入邏輯
+  loadNetworkImageToOverlay(imageUrl, imageId);
+}
+
+// 清除背景
+function clearBackground(){
+  bgImage = null;
+  resizeCanvas(); // 重新調整到預設尺寸
+}
+
+// 清除覆蓋層
+function clearOverlay(){
+  overlayImage = null;
+  redrawOverlay();
+  
+  // 清除範例圖片的選中狀態
+  clearSampleSelection();
+  
+  console.log('已清除去背層和範例圖片選中狀態');
+}
+
+// 重新繪製背景
+function redrawBackground(){
+  // 先填充白色背景
+  bgCtx.fillStyle = '#FFFFFF';
+  bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+  
+  if(bgImage) {
+    // 將圖片完全填滿畫布，保持比例
+    try {
+      bgCtx.drawImage(bgImage, 0, 0, bgCanvas.width, bgCanvas.height);
+    } catch(e) {
+      alert('繪製背景圖片時發生錯誤！');
+    }
+  }
+}
+
+// 重新繪製畫筆層
+function redrawDrawLayer(){
+  if(history.length>0){
+    const img = new Image();
+    img.src = history[history.length-1];
+    img.onload = ()=>{
+      ctx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
+      ctx.drawImage(img,0,0,drawCanvas.width,drawCanvas.height);
+    }
+  }else{
+    ctx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
+  }
+}
+
+// 重新繪製覆蓋層
+function redrawOverlay(){
+  overlayCtx.clearRect(0,0,overlayCanvas.width,overlayCanvas.height);
+  
+  if(overlayImage) {
+    try {
+      // 保持原始尺寸和透明度，填滿整個畫布
+      overlayCtx.drawImage(overlayImage, 0, 0, overlayCanvas.width, overlayCanvas.height);
+    } catch(e) {
+      alert('繪製覆蓋圖片時發生錯誤！');
+    }
+  }
+}
+
+// 下載合併圖片 - 簡化但更可靠的方法
+function downloadCanvas(){
+  console.log('開始下載畫布內容...');
+  
+  try {
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = drawCanvas.width;
+    tempCanvas.height = drawCanvas.height;
+    const tempCtx = tempCanvas.getContext("2d");
+    
+    // 先設置白色背景
+    tempCtx.fillStyle = '#FFFFFF';
+    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+    
+    // 嘗試依序合併所有圖層
+    console.log('合併背景層...');
+    tempCtx.drawImage(bgCanvas, 0, 0);
+    
+    console.log('合併繪圖層...');
+    tempCtx.drawImage(drawCanvas, 0, 0);
+    
+    console.log('合併覆蓋層（範例圖片）...');  
+    tempCtx.drawImage(overlayCanvas, 0, 0);
+    
+    // 嘗試生成下載連結
+    const dataURL = tempCanvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.download = "canvas_artwork_" + new Date().getTime() + ".png";
+    link.href = dataURL;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    console.log('✅ 完整作品下載成功！');
+    
+  } catch(error) {
+    console.error('❌ 標準下載失敗:', error);
+    console.log('嘗試手動重建圖片...');
+    
+    // 手動重建圖片的備用方案
+    downloadByManualComposition();
+  }
+}
+
+// 手動重建圖片進行下載
+function downloadByManualComposition() {
+  const tempCanvas = document.createElement("canvas");
+  tempCanvas.width = drawCanvas.width;
+  tempCanvas.height = drawCanvas.height;
+  const tempCtx = tempCanvas.getContext("2d");
+  
+  // 1. 白色背景
+  tempCtx.fillStyle = '#FFFFFF';
+  tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+  console.log('✅ 已添加白色背景');
+  
+  // 2. 如果有背景圖，嘗試添加
+  if(bgImage) {
+    try {
+      tempCtx.drawImage(bgImage, 0, 0, tempCanvas.width, tempCanvas.height);
+      console.log('✅ 已添加背景圖片');
+    } catch(e) {
+      console.log('⚠️  背景圖片跳過（跨域限制）');
+    }
+  }
+  
+  // 3. 如果有範例圖片，嘗試添加
+  if(overlayImage) {
+    try {
+      tempCtx.drawImage(overlayImage, 0, 0, tempCanvas.width, tempCanvas.height);
+      console.log('✅ 已添加範例圖片');
+    } catch(e) {
+      console.log('⚠️  範例圖片無法直接使用，嘗試從覆蓋畫布複製...');
+      
+      // 嘗試從覆蓋畫布複製內容
+      try {
+        tempCtx.drawImage(overlayCanvas, 0, 0);
+        console.log('✅ 已從覆蓋畫布複製範例圖片');
+      } catch(e2) {
+        console.log('⚠️  覆蓋畫布也無法複製，跳過範例圖片');
+      }
+    }
+  }
+  
+  // 4. 添加繪圖內容
+  try {
+    tempCtx.drawImage(drawCanvas, 0, 0);
+    console.log('✅ 已添加繪圖內容');
+  } catch(e) {
+    console.error('❌ 無法添加繪圖內容:', e);
+  }
+  
+  // 5. 完成下載
+  try {
+    const dataURL = tempCanvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.download = "canvas_manual_" + new Date().getTime() + ".png";
+    link.href = dataURL;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    console.log('✅ 手動重建下載成功！');
+    
+  } catch(error) {
+    console.error('❌ 手動重建也失敗:', error);
+    
+    // 最後的備用方案：只下載繪圖
+    try {
+      const simpleCanvas = document.createElement("canvas");
+      simpleCanvas.width = drawCanvas.width;
+      simpleCanvas.height = drawCanvas.height;
+      const simpleCtx = simpleCanvas.getContext("2d");
+      
+      simpleCtx.fillStyle = '#FFFFFF';
+      simpleCtx.fillRect(0, 0, simpleCanvas.width, simpleCanvas.height);
+      simpleCtx.drawImage(drawCanvas, 0, 0);
+      
+      const link = document.createElement("a");
+      link.download = "canvas_drawing_only_" + new Date().getTime() + ".png";
+      link.href = simpleCanvas.toDataURL("image/png");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      console.log('✅ 繪圖內容下載成功（簡化版本）');
+      
+    } catch(finalError) {
+      console.error('❌ 所有下載方案都失敗:', finalError);
+      alert('下載失敗，請嘗試截圖保存您的作品。');
+    }
+  }
+}
+
+// 48色調色盤
+const colors=[
+  // 黑白灰咖啡色系 (12色)
+  "#000000", // 純黑
+  "#2F2F2F", // 深灰
+  "#696969", // 暗灰
+  "#808080", // 灰色
+  "#3C2415", // 深咖啡
+  "#654321", // 咖啡色
+  "#8B4513", // 鞍褐色
+  "#A0522D", // 褐色
+  "#C0C0C0", // 銀灰
+  "#D2B48C", // 棕黃色
+  "#F5F5DC", // 米色
+  "#FFFFFF", // 純白
+  
+  // 紅色系 (6色)
+  "#8B0000", // 深紅
+  "#DC143C", // 深紅色
+  "#FF0000", // 純紅
+  "#FF6347", // 番茄紅
+  "#FF69B4", // 熱粉紅
+  "#FFB6C1", // 淺粉紅
+  
+  // 橙色系 (6色)
+  "#FF4500", // 橙紅
+  "#FF6600", // 深橙
+  "#FF8C00", // 暗橙
+  "#FFA500", // 橙色
+  "#FFB347", // 淺橙
+  "#FFDAB9", // 蜜桃橙
+  
+  // 黃色系 (6色)
+  "#B8860B", // 暗金黃
+  "#DAA520", // 金黃
+  "#FFD700", // 金色
+  "#FFFF00", // 純黃
+  "#FFFF99", // 淺黃
+  "#FFFACD", // 檸檬綢
+  
+  // 綠色系 (6色)
+  "#006400", // 深綠
+  "#228B22", // 森林綠
+  "#32CD32", // 萊姆綠
+  "#00FF00", // 純綠
+  "#98FB98", // 淡綠
+  "#F0FFF0", // 蜜瓜綠
+  
+  // 藍色系 (6色)
+  "#000080", // 海軍藍
+  "#0000CD", // 中藍
+  "#0000FF", // 純藍
+  "#4169E1", // 皇家藍
+  "#87CEEB", // 天空藍
+  "#E6F3FF", // 愛麗絲藍
+  
+  // 紫色系 (6色)
+  "#4B0082", // 靛藍
+  "#800080", // 紫色
+  "#9932CC", // 暗蘭花紫
+  "#BA55D3", // 中蘭花紫
+  "#DDA0DD", // 梅花紫
+  "#E6E6FA"  // 薰衣草紫
+];
+
+const palette = document.getElementById("colorPalette");
+colors.forEach(c=>{
+  const btn = document.createElement("div");
+  btn.className="color-btn";
+  btn.style.backgroundColor=c;
+  btn.onclick=()=>setColor(c);
+  btn.title = c;
+  palette.appendChild(btn);
+});
+
+// 初始化
+window.addEventListener('load', function() {
+  resizeCanvas();
+  saveHistory();
+  
+  // 確保畫布可見
+  console.log('Canvas elements:', {
+    bgCanvas: bgCanvas,
+    drawCanvas: drawCanvas,
+    overlayCanvas: overlayCanvas,
+    bgCanvasStyle: bgCanvas.style.cssText,
+    drawCanvasStyle: drawCanvas.style.cssText
+  });
+  
+  // 測試範例圖片載入
+  console.log('範例圖片網址測試:');
+  console.log('seed1:', 'https://raw.githubusercontent.com/farmeryi/coloring-game/5f97cd68ce2b0dcd008401d700b110fbadfb685c/seed1.png');
+  console.log('seed2:', 'https://raw.githubusercontent.com/farmeryi/coloring-game/5f97cd68ce2b0dcd008401d700b110fbadfb685c/seed2.png');
+});
+
+// 觸控事件處理
+document.addEventListener('touchmove', function(e) {
+  if(e.target.tagName === 'CANVAS') {
+    // 阻止所有預設行為，讓我們完全控制
+    e.preventDefault();
+  }
+}, {passive: false});
+
+// 觸控開始處理
+document.addEventListener('touchstart', function(e) {
+  if(e.target.tagName === 'CANVAS') {
+    e.preventDefault();
+    if(e.touches.length >= 2) {
+      multiTouchActive = true;
+      justFinishedMultiTouch = false;
+    }
+  }
+}, {passive: false});
+
+// 觸控結束處理
+document.addEventListener('touchend', function(e) {
+  if(e.target.tagName === 'CANVAS') {
+    e.preventDefault();
+    if(e.touches.length === 0) {
+      // 所有手指都離開了
+      if(isPinching) {
+        // 剛結束雙指操作，設置保護期
+        setTimeout(() => {
+          justFinishedMultiTouch = false;
+          multiTouchActive = false;
+        }, 300);
+      } else {
+        // 單指操作結束，立即重置
+        multiTouchActive = false;
+        justFinishedMultiTouch = false;
+      }
+    }
+  }
+}, {passive: false});
+
+</script>
+
+</body>
+</html>
