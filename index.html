@@ -768,6 +768,109 @@ function uploadOverlayImage(event){
   event.target.value = '';
 }
 
+// 載入網路圖片到覆蓋層（去背層）
+function loadNetworkImageToOverlay(imageUrl, imageId = null) {
+  console.log('=== 載入網路圖片到去背層 ===');
+  console.log('圖片網址:', imageUrl);
+  console.log('圖片ID:', imageId);
+  
+  const img = new Image();
+  img.crossOrigin = 'anonymous'; // 加入跨域支援
+  
+  img.onload = function() {
+    console.log('✅ 網路圖片載入成功!', {
+      url: imageUrl,
+      width: img.width,
+      height: img.height,
+      complete: img.complete
+    });
+    
+    // 使用與上傳檔案相同的邏輯
+    overlayImage = img;
+    redrawOverlay();
+    
+    // 更新選中狀態
+    if(imageId) {
+      updateSampleSelection(imageId);
+    }
+    
+    console.log('✅ 網路圖片已載入到去背層！');
+  };
+  
+  img.onerror = function(error) {
+    console.error('❌ 網路圖片載入失敗:', error);
+    
+    // 嘗試不使用跨域設定
+    const img2 = new Image();
+    
+    img2.onload = function() {
+      console.log('✅ 備用方案載入成功!');
+      overlayImage = img2;
+      redrawOverlay();
+      if(imageId) updateSampleSelection(imageId);
+    };
+    
+    img2.onerror = function() {
+      console.error('❌ 備用方案也載入失敗');
+      
+      // 嘗試備用網址格式
+      const alternativeUrl = imageUrl.includes('github.com') 
+        ? imageUrl.replace('github.com', 'raw.githubusercontent.com').replace('/raw/', '/')
+        : imageUrl.replace('raw.githubusercontent.com', 'github.com').replace(/\/([^\/]+)\/([^\/]+)\/(.+)/, '/$1/$2/raw/$3');
+      
+      if(alternativeUrl !== imageUrl) {
+        console.log('嘗試備用網址:', alternativeUrl);
+        const img3 = new Image();
+        img3.crossOrigin = 'anonymous';
+        
+        img3.onload = function() {
+          console.log('✅ 備用網址載入成功!');
+          overlayImage = img3;
+          redrawOverlay();
+          if(imageId) updateSampleSelection(imageId);
+        };
+        
+        img3.onerror = function() {
+          alert('範例圖片載入失敗，請檢查網路連線或稍後再試！');
+        };
+        
+        img3.src = alternativeUrl;
+      } else {
+        alert('範例圖片載入失敗，請檢查網路連線或稍後再試！');
+      }
+    };
+    
+    img2.src = imageUrl;
+  };
+  
+  // 開始載入
+  img.src = imageUrl;
+}
+
+// 更新範例圖片選中狀態
+function updateSampleSelection(imageId) {
+  // 清除所有選中狀態
+  clearSampleSelection();
+  
+  // 標記當前選中的項目
+  const items = document.querySelectorAll('.sample-image-item');
+  const currentItem = items[imageId - 1];
+  if(currentItem) {
+    currentItem.style.borderColor = '#4CAF50';
+    currentItem.style.backgroundColor = '#f0f8f0';
+    console.log('已標記選中狀態，圖片ID:', imageId);
+  }
+}
+
+// 清除範例圖片選中狀態
+function clearSampleSelection() {
+  const items = document.querySelectorAll('.sample-image-item');
+  items.forEach(item => {
+    item.style.borderColor = 'transparent';
+    item.style.backgroundColor = '';
+  });
+}
+
 // 測試用的簡化載入函數 - 現在使用統一的載入邏輯
 function loadSampleImageTest(imageId) {
   console.log('=== 點選範例圖片 ===');
@@ -893,99 +996,6 @@ function downloadCanvas(){
   } catch(error) {
     console.error('❌ 標準下載失敗:', error);
     console.log('嘗試手動重建圖片...');
-    
-    // 手動重建圖片的備用方案
-    downloadByManualComposition();
-  }
-}
-
-// 手動重建圖片進行下載
-function downloadByManualComposition() {
-  const tempCanvas = document.createElement("canvas");
-  tempCanvas.width = drawCanvas.width;
-  tempCanvas.height = drawCanvas.height;
-  const tempCtx = tempCanvas.getContext("2d");
-  
-  // 1. 白色背景
-  tempCtx.fillStyle = '#FFFFFF';
-  tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-  console.log('✅ 已添加白色背景');
-  
-  // 2. 如果有背景圖，嘗試添加
-  if(bgImage) {
-    try {
-      tempCtx.drawImage(bgImage, 0, 0, tempCanvas.width, tempCanvas.height);
-      console.log('✅ 已添加背景圖片');
-    } catch(e) {
-      console.log('⚠️  背景圖片跳過（跨域限制）');
-    }
-  }
-  
-  // 3. 如果有範例圖片，嘗試添加
-  if(overlayImage) {
-    try {
-      tempCtx.drawImage(overlayImage, 0, 0, tempCanvas.width, tempCanvas.height);
-      console.log('✅ 已添加範例圖片');
-    } catch(e) {
-      console.log('⚠️  範例圖片無法直接使用，嘗試從覆蓋畫布複製...');
-      
-      // 嘗試從覆蓋畫布複製內容
-      try {
-        tempCtx.drawImage(overlayCanvas, 0, 0);
-        console.log('✅ 已從覆蓋畫布複製範例圖片');
-      } catch(e2) {
-        console.log('⚠️  覆蓋畫布也無法複製，跳過範例圖片');
-      }
-    }
-  }
-  
-  // 4. 添加繪圖內容
-  try {
-    tempCtx.drawImage(drawCanvas, 0, 0);
-    console.log('✅ 已添加繪圖內容');
-  } catch(e) {
-    console.error('❌ 無法添加繪圖內容:', e);
-  }
-  
-  // 5. 完成下載
-  try {
-    const dataURL = tempCanvas.toDataURL("image/png");
-    const link = document.createElement("a");
-    link.download = "canvas_manual_" + new Date().getTime() + ".png";
-    link.href = dataURL;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    console.log('✅ 手動重建下載成功！');
-    
-  } catch(error) {
-    console.error('❌ 手動重建也失敗:', error);
-    
-    // 最後的備用方案：只下載繪圖
-    try {
-      const simpleCanvas = document.createElement("canvas");
-      simpleCanvas.width = drawCanvas.width;
-      simpleCanvas.height = drawCanvas.height;
-      const simpleCtx = simpleCanvas.getContext("2d");
-      
-      simpleCtx.fillStyle = '#FFFFFF';
-      simpleCtx.fillRect(0, 0, simpleCanvas.width, simpleCanvas.height);
-      simpleCtx.drawImage(drawCanvas, 0, 0);
-      
-      const link = document.createElement("a");
-      link.download = "canvas_drawing_only_" + new Date().getTime() + ".png";
-      link.href = simpleCanvas.toDataURL("image/png");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      console.log('✅ 繪圖內容下載成功（簡化版本）');
-      
-    } catch(finalError) {
-      console.error('❌ 所有下載方案都失敗:', finalError);
-      alert('下載失敗，請嘗試截圖保存您的作品。');
-    }
   }
 }
 
