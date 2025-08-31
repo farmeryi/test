@@ -445,7 +445,7 @@ function resizeCanvas(){
     c.style.width = width + 'px';
     c.style.height = height + 'px';
     // 縮放繪圖上下文
-    // const ctx = c.getContext('2d');
+    const ctx = c.getContext('2d');
     ctx.scale(pixelRatio, pixelRatio);
     
     // 確保畫布可見
@@ -505,7 +505,7 @@ function getPos(e){
   }
   
   // 考慮畫布的縮放和偏移
-  const pixelRatio = window.devicePixelRatio || 1;
+  //const pixelRatio = window.devicePixelRatio || 1;
   
   const x = (clientX - rect.left)*pixelRatio / canvasScale;
   const y = (clientY - rect.top)*pixelRatio / canvasScale;
