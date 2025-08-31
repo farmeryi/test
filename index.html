@@ -437,10 +437,9 @@ function resizeCanvas(){
     }
   }
 
-  const pixelRatio = window.devicePixelRatio || 1;
   
   [bgCanvas, drawCanvas, overlayCanvas].forEach(c => {
-    
+    const pixelRatio = window.devicePixelRatio || 1; 
     c.width = width*pixelRatio;
     c.height = height*pixelRatio;
     c.style.width = width + 'px';
