@@ -403,10 +403,11 @@ function updateCanvasTransform() {
   });
 }
 
-// 響應式畫布調整
+// 響應式畫布調整 - 支援高解析度
 function resizeCanvas(){
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
+  const pixelRatio = window.devicePixelRatio || 1;
   
   let width, height;
   
@@ -437,22 +438,24 @@ function resizeCanvas(){
     }
   }
 
-  const pixelRatio = window.devicePixelRatio || 1; 
-  
   [bgCanvas, drawCanvas, overlayCanvas].forEach(c => {
-    c.width = width*pixelRatio;
-    c.height = height*pixelRatio;
+    // 設置實際像素尺寸（高解析度）
+    c.width = width * pixelRatio;
+    c.height = height * pixelRatio;
+    
+    // 設置CSS顯示尺寸
     c.style.width = width + 'px';
     c.style.height = height + 'px';
-    // 縮放繪圖上下文
-    const ctx = c.getContext('2d');
-    ctx.scale(pixelRatio, pixelRatio);
-    
+
     // 確保畫布可見
     c.style.display = 'block';
     c.style.position = 'absolute';
     c.style.top = '0px';
     c.style.left = '0px';
+    
+    // 縮放繪圖上下文以匹配像素比例
+    const ctx = c.getContext('2d');
+    ctx.scale(pixelRatio, pixelRatio);
   });
   
   // 重置縮放和位置
@@ -491,10 +494,12 @@ function getTouchCenter(touch1, touch2) {
     y: (touch1.clientY + touch2.clientY) / 2
   };
 }
-
-// 觸控與滑鼠事件
+  
+// 觸控與滑鼠事件 - 修正高解析度座標
 function getPos(e){
   const rect = drawCanvas.getBoundingClientRect();
+  const pixelRatio = window.devicePixelRatio || 1;
+  
   let clientX, clientY;
   if(e.touches && e.touches.length === 1){ 
     clientX = e.touches[0].clientX; 
@@ -504,16 +509,15 @@ function getPos(e){
     clientY = e.clientY;
   }
   
-  // 考慮畫布的縮放和偏移
-  const pixelRatio = window.devicePixelRatio || 1;
+  // 計算相對於canvas的位置
+  const rectX = (clientX - rect.left);
+  const rectY = (clientY - rect.top);
   
-  const x = (clientX - rect.left)*pixelRatio / canvasScale;
-  const y = (clientY - rect.top)*pixelRatio / canvasScale;
+  // 考慮設備像素比例和畫布縮放
+  const x = (rectX * pixelRatio) / canvasScale;
+  const y = (rectY * pixelRatio) / canvasScale;
   
-  return { 
-    x: x * (drawCanvas.width / (rect.width*pixelRatio / canvasScale)),
-    y: y * (drawCanvas.height / (rect.height*pixelRatio / canvasScale))
-  };
+  return { x: x, y: y };
 }
 
 function startDraw(e){
@@ -953,47 +957,54 @@ function clearOverlay(){
 
 // 重新繪製背景
 function redrawBackground(){
-  // 先填充白色背景
+  const pixelRatio = window.devicePixelRatio || 1;
+  
+  // 重置變換並設置白色背景
+  bgCtx.save();
+  bgCtx.setTransform(1, 0, 0, 1, 0, 0);
   bgCtx.fillStyle = '#FFFFFF';
   bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+  bgCtx.restore();
   
   if(bgImage) {
     // 將圖片完全填滿畫布，保持比例
     try {
-      bgCtx.drawImage(bgImage, 0, 0, bgCanvas.width, bgCanvas.height);
+      bgCtx.drawImage(bgImage, 0, 0, bgCanvas.width / pixelRatio, bgCanvas.height / pixelRatio);
     } catch(e) {
       alert('繪製背景圖片時發生錯誤！');
     }
   }
 }
 
-// 重新繪製畫筆層
-function redrawDrawLayer(){
-  if(history.length>0){
-    const img = new Image();
-    img.src = history[history.length-1];
-    img.onload = ()=>{
-      ctx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
-      ctx.drawImage(img,0,0,drawCanvas.width,drawCanvas.height);
+// 重新繪製覆蓋層 - 支援高解析度
+function redrawOverlay(){
+  const pixelRatio = window.devicePixelRatio || 1;
+  
+  console.log('開始重新繪製覆蓋層（高解析度）...');
+  
+  // 重置變換並清除
+  overlayCtx.save();
+  overlayCtx.setTransform(1, 0, 0, 1, 0, 0);
+  overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+  overlayCtx.restore();
+  
+  if(overlayImage) {
+    console.log('繪製覆蓋圖片到去背層（高解析度）');
+    
+    try {
+      // 考慮像素比例繪製覆蓋圖
+      overlayCtx.drawImage(overlayImage, 0, 0, overlayCanvas.width / pixelRatio, overlayCanvas.height / pixelRatio);
+      console.log('覆蓋圖片繪製完成（高解析度）');
+      
+    } catch(e) {
+      console.error('繪製覆蓋圖片時發生錯誤:', e);
+      console.warn('圖片可能存在跨域限制，但仍可正常顯示和繪圖');
     }
-  }else{
-    ctx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
+  } else {
+    console.log('沒有覆蓋圖片需要繪製');
   }
 }
 
-// 重新繪製覆蓋層
-function redrawOverlay(){
-  overlayCtx.clearRect(0,0,overlayCanvas.width,overlayCanvas.height);
-  
-  if(overlayImage) {
-    try {
-      // 保持原始尺寸和透明度，填滿整個畫布
-      overlayCtx.drawImage(overlayImage, 0, 0, overlayCanvas.width, overlayCanvas.height);
-    } catch(e) {
-      alert('繪製覆蓋圖片時發生錯誤！');
-    }
-  }
-}
 
 // 下載合併圖片 - 簡化但更可靠的方法
 function downloadCanvas(){
