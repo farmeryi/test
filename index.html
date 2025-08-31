@@ -436,14 +436,19 @@ function resizeCanvas(){
       width = height * (4/3);
     }
   }
+
+  const pixelRatio = window.devicePixelRatio || 1;
   
   [bgCanvas, drawCanvas, overlayCanvas].forEach(c => {
-    const pixelRatio = window.devicePixelRatio || 1;
+    
     c.width = width*pixelRatio;
     c.height = height*pixelRatio;
     c.style.width = width + 'px';
     c.style.height = height + 'px';
+    // 縮放繪圖上下文
+    const ctx = c.getContext('2d');
     ctx.scale(pixelRatio, pixelRatio);
+    
     // 確保畫布可見
     c.style.display = 'block';
     c.style.position = 'absolute';
@@ -501,12 +506,14 @@ function getPos(e){
   }
   
   // 考慮畫布的縮放和偏移
-  const x = (clientX - rect.left) / canvasScale;
-  const y = (clientY - rect.top) / canvasScale;
+  const pixelRatio = window.devicePixelRatio || 1;
+  
+  const x = (clientX - rect.left)*pixelRatio / canvasScale;
+  const y = (clientY - rect.top)*pixelRatio / canvasScale;
   
   return { 
-    x: x * (drawCanvas.width / (rect.width / canvasScale)),
-    y: y * (drawCanvas.height / (rect.height / canvasScale))
+    x: x * (drawCanvas.width / (rect.width*pixelRatio / canvasScale)),
+    y: y * (drawCanvas.height / (rect.height*pixelRatio / canvasScale))
   };
 }
 
