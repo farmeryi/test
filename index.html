@@ -457,11 +457,9 @@ function resizeCanvas(){
     c.style.top = '0px';
     c.style.left = '0px';
     
-    // 只在手機上縮放上下文
-    if (isMobile && pixelRatio > 1) {
-      const ctx = c.getContext('2d');
-      ctx.scale(pixelRatio, pixelRatio);
-    }
+    // 縮放繪圖上下文以匹配像素比例
+    const ctx = c.getContext('2d');
+    ctx.scale(pixelRatio, pixelRatio);
   });
   
   // 重置縮放和位置
@@ -501,10 +499,11 @@ function getTouchCenter(touch1, touch2) {
   };
 }
 
-// 觸控與滑鼠事件 - 修正高解析度座標
+// 觸控與滑鼠事件 - 完全修正版本
 function getPos(e){
   const rect = drawCanvas.getBoundingClientRect();
-  const pixelRatio = window.devicePixelRatio || 1;
+  const isMobile = window.innerWidth <= 768;
+  const pixelRatio = isMobile ? (window.devicePixelRatio || 1) : 1;
   
   let clientX, clientY;
   if(e.touches && e.touches.length === 1){ 
@@ -515,15 +514,15 @@ function getPos(e){
     clientY = e.clientY;
   }
   
-  // 計算相對於canvas的位置
-  const rectX = (clientX - rect.left);
-  const rectY = (clientY - rect.top);
+  // 使用變換後的實際Canvas位置
+  const rectX = clientX - rect.left;
+  const rectY = clientY - rect.top;
   
-  // 考慮設備像素比例和畫布縮放
-  const x = (rectX * pixelRatio) / canvasScale;
-  const y = (rectY * pixelRatio) / canvasScale;
+  // 轉換為Canvas內部座標（考慮縮放）
+  const canvasX = rectX / canvasScale;
+  const canvasY = rectY / canvasScale;
   
-  return { x: x, y: y };
+  return { x: canvasX, y: canvasY };
 }
 
 function startDraw(e){
@@ -962,52 +961,161 @@ function clearOverlay(){
 }
 
 // 重新繪製背景
+// 重新繪製背景 - 防止視窗移動時重置
 function redrawBackground(){
-  const pixelRatio = window.devicePixelRatio || 1;
+  const isMobile = window.innerWidth <= 768;
+  const pixelRatio = isMobile ? (window.devicePixelRatio || 1) : 1;
   
-  // 重置變換並設置白色背景
+  // 保存當前的繪圖狀態
   bgCtx.save();
-  bgCtx.setTransform(1, 0, 0, 1, 0, 0);
-  bgCtx.fillStyle = '#FFFFFF';
-  bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
-  bgCtx.restore();
   
-  if(bgImage) {
-    // 將圖片完全填滿畫布，保持比例
+  // 只重置變換，不清除內容
+  bgCtx.setTransform(1, 0, 0, 1, 0, 0);
+  
+  // 只在沒有背景圖時才填充白色
+  if (!bgImage) {
+    bgCtx.fillStyle = '#FFFFFF';
+    bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+  } else {
+    // 先填充白色背景
+    bgCtx.fillStyle = '#FFFFFF';
+    bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+    
     try {
+      // 繪製背景圖
       bgCtx.drawImage(bgImage, 0, 0, bgCanvas.width / pixelRatio, bgCanvas.height / pixelRatio);
     } catch(e) {
-      alert('繪製背景圖片時發生錯誤！');
+      console.warn('繪製背景圖片時發生錯誤');
     }
   }
+  
+  // 恢復繪圖狀態
+  bgCtx.restore();
 }
 
-// 重新繪製覆蓋層 - 支援高解析度
+// 重新繪製畫筆層 - 防止內容丟失
+function redrawDrawLayer(){
+  const isMobile = window.innerWidth <= 768;
+  const pixelRatio = isMobile ? (window.devicePixelRatio || 1) : 1;
+  
+  // 只有在有歷史記錄時才重繪
+  if(history.length > 0){
+    const img = new Image();
+    img.src = history[history.length-1];
+    img.onload = ()=>{
+      // 保存當前狀態
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      
+      // 清除並重繪
+      ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      ctx.drawImage(img, 0, 0, drawCanvas.width / pixelRatio, drawCanvas.height / pixelRatio);
+      
+      // 恢復狀態
+      ctx.restore();
+    }
+  }
+  // 如果沒有歷史記錄，不做任何操作（保持當前內容）
+}
+
+// 重新繪製覆蓋層 - 防止內容丟失
 function redrawOverlay(){
-  const pixelRatio = window.devicePixelRatio || 1;
+  const isMobile = window.innerWidth <= 768;
+  const pixelRatio = isMobile ? (window.devicePixelRatio || 1) : 1;
   
-  console.log('開始重新繪製覆蓋層（高解析度）...');
+  console.log('重新繪製覆蓋層（保護現有內容）...');
   
-  // 重置變換並清除
+  // 保存當前狀態
   overlayCtx.save();
   overlayCtx.setTransform(1, 0, 0, 1, 0, 0);
+  
+  // 清除覆蓋層
   overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-  overlayCtx.restore();
   
   if(overlayImage) {
-    console.log('繪製覆蓋圖片到去背層（高解析度）');
+    console.log('繪製覆蓋圖片到去背層');
     
     try {
       // 考慮像素比例繪製覆蓋圖
       overlayCtx.drawImage(overlayImage, 0, 0, overlayCanvas.width / pixelRatio, overlayCanvas.height / pixelRatio);
-      console.log('覆蓋圖片繪製完成（高解析度）');
+      console.log('覆蓋圖片繪製完成');
       
     } catch(e) {
       console.error('繪製覆蓋圖片時發生錯誤:', e);
       console.warn('圖片可能存在跨域限制，但仍可正常顯示和繪圖');
     }
+  }
+  
+  // 恢復狀態
+  overlayCtx.restore();
+}
+
+// 修正 resizeCanvas 函數，避免不必要的重繪
+function resizeCanvas(){
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const isMobile = window.innerWidth <= 768;
+  const pixelRatio = isMobile ? (window.devicePixelRatio || 1) : 1;
+  
+  let width, height;
+  
+  if (bgImage) {
+    const imgAspect = bgImage.width / bgImage.height;
+    width = viewportWidth;
+    height = width / imgAspect;
+    
+    const maxHeight = viewportHeight * 0.8;
+    if (height > maxHeight) {
+      height = maxHeight;
+      width = height * imgAspect;
+    }
   } else {
-    console.log('沒有覆蓋圖片需要繪製');
+    width = viewportWidth;
+    height = width * 0.75;
+    
+    const maxHeight = viewportHeight * 0.8;
+    if (height > maxHeight) {
+      height = maxHeight;
+      width = height * (4/3);
+    }
+  }
+  
+  // 檢查是否真的需要調整尺寸
+  const needResize = bgCanvas.style.width !== width + 'px' || 
+                     bgCanvas.style.height !== height + 'px';
+  
+  if (needResize) {
+    console.log('畫布尺寸需要調整，重新設置...');
+    
+    [bgCanvas, drawCanvas, overlayCanvas].forEach(c => {
+      c.width = width * pixelRatio;
+      c.height = height * pixelRatio;
+      c.style.width = width + 'px';
+      c.style.height = height + 'px';
+      c.style.display = 'block';
+      c.style.position = 'absolute';
+      c.style.top = '0px';
+      c.style.left = '0px';
+      
+      // 只在手機上縮放上下文
+      if (isMobile && pixelRatio > 1) {
+        const ctx = c.getContext('2d');
+        ctx.scale(pixelRatio, pixelRatio);
+      }
+    });
+    
+    // 重置變換
+    canvasScale = 1;
+    canvasOffsetX = 0;
+    canvasOffsetY = 0;
+    updateCanvasTransform();
+    
+    // 只在尺寸改變時才重繪
+    redrawBackground();
+    redrawDrawLayer();
+    redrawOverlay();
+  } else {
+    console.log('畫布尺寸無需調整，保持現有內容');
   }
 }
 
