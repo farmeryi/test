@@ -457,9 +457,11 @@ function resizeCanvas(){
     c.style.top = '0px';
     c.style.left = '0px';
     
-    // 縮放繪圖上下文以匹配像素比例
-    const ctx = c.getContext('2d');
-    ctx.scale(pixelRatio, pixelRatio);
+    // 只在手機上縮放上下文
+    if (isMobile && pixelRatio > 1) {
+      const ctx = c.getContext('2d');
+      ctx.scale(pixelRatio, pixelRatio);
+    }
   });
   
   // 重置縮放和位置
@@ -499,11 +501,10 @@ function getTouchCenter(touch1, touch2) {
   };
 }
 
-// 觸控與滑鼠事件 - 完全修正版本
+// 觸控與滑鼠事件 - 修正高解析度座標
 function getPos(e){
   const rect = drawCanvas.getBoundingClientRect();
-  const isMobile = window.innerWidth <= 768;
-  const pixelRatio = isMobile ? (window.devicePixelRatio || 1) : 1;
+  const pixelRatio = window.devicePixelRatio || 1;
   
   let clientX, clientY;
   if(e.touches && e.touches.length === 1){ 
@@ -514,15 +515,15 @@ function getPos(e){
     clientY = e.clientY;
   }
   
-  // 使用變換後的實際Canvas位置
-  const rectX = clientX - rect.left;
-  const rectY = clientY - rect.top;
+  // 計算相對於canvas的位置
+  const rectX = (clientX - rect.left);
+  const rectY = (clientY - rect.top);
   
-  // 轉換為Canvas內部座標（考慮縮放）
-  const canvasX = rectX / canvasScale;
-  const canvasY = rectY / canvasScale;
+  // 考慮設備像素比例和畫布縮放
+  const x = (rectX * pixelRatio) / canvasScale;
+  const y = (rectY * pixelRatio) / canvasScale;
   
-  return { x: canvasX, y: canvasY };
+  return { x: x, y: y };
 }
 
 function startDraw(e){
