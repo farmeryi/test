@@ -494,9 +494,8 @@ function getTouchCenter(touch1, touch2) {
     y: (touch1.clientY + touch2.clientY) / 2
   };
 }
-  
-// 觸控與滑鼠事件 - 修正高解析度座標
-// 觸控與滑鼠事件 - 修正高解析度座標
+
+// 觸控與滑鼠事件 - 修正拖移後的座標偏移
 function getPos(e){
   const rect = drawCanvas.getBoundingClientRect();
   const isMobile = window.innerWidth <= 768;
@@ -511,25 +510,18 @@ function getPos(e){
     clientY = e.clientY;
   }
   
-  // 修正座標計算 - 考慮像素比例和Canvas變換
-  const rectX = clientX - rect.left;
-  const rectY = clientY - rect.top;
+  // 獲取Canvas的實際顯示位置（考慮transform）
+  const canvasRect = drawCanvas.getBoundingClientRect();
   
-  // 考慮Canvas的transform (縮放和位移)
-  const transformedX = (rectX - canvasOffsetX) / canvasScale;
-  const transformedY = (rectY - canvasOffsetY) / canvasScale;
+  // 計算相對於變換後Canvas的位置
+  const relativeX = clientX - canvasRect.left;
+  const relativeY = clientY - canvasRect.top;
   
-  // 如果是手機且有像素比例縮放，需要調整
-  let finalX = transformedX;
-  let finalY = transformedY;
+  // 轉換為Canvas內部座標系統
+  const canvasX = relativeX / canvasScale;
+  const canvasY = relativeY / canvasScale;
   
-  if (isMobile && pixelRatio > 1) {
-    // 手機高解析度時，座標需要對應到context縮放後的座標系統
-    finalX = transformedX;
-    finalY = transformedY;
-  }
-  
-  return { x: finalX, y: finalY };
+  return { x: canvasX, y: canvasY };
 }
 
 function startDraw(e){
