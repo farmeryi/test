@@ -1249,7 +1249,17 @@ document.addEventListener('touchmove', function(e) {
 }, {passive: false});
 
 // 觸控開始處理
+// 修正觸控事件處理 - 只處理畫布區域的觸控
+document.addEventListener('touchmove', function(e) {
+  // 只有當觸控目標是Canvas時才阻止預設行為
+  if(e.target.tagName === 'CANVAS') {
+    e.preventDefault();
+  }
+  // 其他區域不做任何處理，讓正常滾動功能運作
+}, {passive: false});
+
 document.addEventListener('touchstart', function(e) {
+  // 只處理Canvas上的觸控
   if(e.target.tagName === 'CANVAS') {
     e.preventDefault();
     if(e.touches.length >= 2) {
@@ -1257,27 +1267,26 @@ document.addEventListener('touchstart', function(e) {
       justFinishedMultiTouch = false;
     }
   }
+  // 非Canvas區域不做任何處理
 }, {passive: false});
 
-// 觸控結束處理
 document.addEventListener('touchend', function(e) {
+  // 只處理Canvas上的觸控結束事件
   if(e.target.tagName === 'CANVAS') {
     e.preventDefault();
     if(e.touches.length === 0) {
-      // 所有手指都離開了
       if(isPinching) {
-        // 剛結束雙指操作，設置保護期
         setTimeout(() => {
           justFinishedMultiTouch = false;
           multiTouchActive = false;
         }, 300);
       } else {
-        // 單指操作結束，立即重置
         multiTouchActive = false;
         justFinishedMultiTouch = false;
       }
     }
   }
+  // 非Canvas區域不做任何處理
 }, {passive: false});
 
 </script>
