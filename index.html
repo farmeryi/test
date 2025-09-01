@@ -960,53 +960,53 @@ function clearOverlay(){
   console.log('已清除去背層和範例圖片選中狀態');
 }
 
-// 重新繪製背景
+
+// 確保畫布重繪函數正確
 function redrawBackground(){
-  const pixelRatio = window.devicePixelRatio || 1;
+  const isMobile = window.innerWidth <= 768;
+  const pixelRatio = isMobile ? (window.devicePixelRatio || 1) : 1;
   
-  // 重置變換並設置白色背景
-  bgCtx.save();
-  bgCtx.setTransform(1, 0, 0, 1, 0, 0);
   bgCtx.fillStyle = '#FFFFFF';
-  bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
-  bgCtx.restore();
+  bgCtx.fillRect(0, 0, bgCanvas.width / pixelRatio, bgCanvas.height / pixelRatio);
   
   if(bgImage) {
-    // 將圖片完全填滿畫布，保持比例
     try {
       bgCtx.drawImage(bgImage, 0, 0, bgCanvas.width / pixelRatio, bgCanvas.height / pixelRatio);
     } catch(e) {
-      alert('繪製背景圖片時發生錯誤！');
+      console.error('繪製背景圖片錯誤:', e);
     }
   }
 }
 
-// 重新繪製覆蓋層 - 支援高解析度
 function redrawOverlay(){
-  const pixelRatio = window.devicePixelRatio || 1;
+  const isMobile = window.innerWidth <= 768;
+  const pixelRatio = isMobile ? (window.devicePixelRatio || 1) : 1;
   
-  console.log('開始重新繪製覆蓋層（高解析度）...');
-  
-  // 重置變換並清除
-  overlayCtx.save();
-  overlayCtx.setTransform(1, 0, 0, 1, 0, 0);
   overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-  overlayCtx.restore();
   
   if(overlayImage) {
-    console.log('繪製覆蓋圖片到去背層（高解析度）');
-    
     try {
-      // 考慮像素比例繪製覆蓋圖
       overlayCtx.drawImage(overlayImage, 0, 0, overlayCanvas.width / pixelRatio, overlayCanvas.height / pixelRatio);
-      console.log('覆蓋圖片繪製完成（高解析度）');
-      
     } catch(e) {
-      console.error('繪製覆蓋圖片時發生錯誤:', e);
-      console.warn('圖片可能存在跨域限制，但仍可正常顯示和繪圖');
+      console.error('繪製覆蓋圖片錯誤:', e);
+    }
+  }
+}
+
+// 修正歷史記錄重繪
+function redrawDrawLayer(){
+  const isMobile = window.innerWidth <= 768;
+  const pixelRatio = isMobile ? (window.devicePixelRatio || 1) : 1;
+  
+  if(history.length > 0){
+    const img = new Image();
+    img.src = history[history.length-1];
+    img.onload = () => {
+      ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      ctx.drawImage(img, 0, 0, drawCanvas.width / pixelRatio, drawCanvas.height / pixelRatio);
     }
   } else {
-    console.log('沒有覆蓋圖片需要繪製');
+    ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
   }
 }
 
