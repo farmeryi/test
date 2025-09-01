@@ -395,12 +395,16 @@ let canvasOffsetY = 0;
 let minScale = 0.5;
 let maxScale = 3;
 
-// 更新畫布變換
+// 更新畫布變換 - 防止內容重置
 function updateCanvasTransform() {
   const transform = `translate(${canvasOffsetX}px, ${canvasOffsetY}px) scale(${canvasScale})`;
+  
   [bgCanvas, drawCanvas, overlayCanvas].forEach(canvas => {
     canvas.style.transform = transform;
   });
+  
+  // 重要：不要在這裡調用重繪函數
+  // 移除任何 redraw 相關的調用
 }
 
 // 響應式畫布調整 - 支援高解析度
@@ -495,7 +499,7 @@ function getTouchCenter(touch1, touch2) {
   };
 }
 
-// 觸控與滑鼠事件 - 修正拖移後的座標偏移
+// 觸控與滑鼠事件 - 完全修正版本
 function getPos(e){
   const rect = drawCanvas.getBoundingClientRect();
   const isMobile = window.innerWidth <= 768;
@@ -510,16 +514,13 @@ function getPos(e){
     clientY = e.clientY;
   }
   
-  // 獲取Canvas的實際顯示位置（考慮transform）
-  const canvasRect = drawCanvas.getBoundingClientRect();
+  // 使用變換後的實際Canvas位置
+  const rectX = clientX - rect.left;
+  const rectY = clientY - rect.top;
   
-  // 計算相對於變換後Canvas的位置
-  const relativeX = clientX - canvasRect.left;
-  const relativeY = clientY - canvasRect.top;
-  
-  // 轉換為Canvas內部座標系統
-  const canvasX = relativeX / canvasScale;
-  const canvasY = relativeY / canvasScale;
+  // 轉換為Canvas內部座標（考慮縮放）
+  const canvasX = rectX / canvasScale;
+  const canvasY = rectY / canvasScale;
   
   return { x: canvasX, y: canvasY };
 }
@@ -576,8 +577,8 @@ function startDraw(e){
   }
 }
 
+// 雙指手勢的 draw 函數也需要修正
 function draw(e){
-  // 雙指手勢處理 - 縮放和拖動畫布
   if(e.touches && e.touches.length >= 2) {
     isPinching = true;
     multiTouchActive = true;
