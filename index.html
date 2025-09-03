@@ -56,17 +56,15 @@
     box-sizing: border-box;
   }
   
-  #canvasContainer { 
-    position: relative;
-    width: 100vw;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0;
-    touch-action: none;
-    overflow: visible;
-    min-height: 400px;
-  }
+ #canvasContainer { 
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;           /* 居中對齊 */
+  width: fit-content;       /* 自適應寬度 */
+  max-width: 90vw;         /* 限制最大寬度 */
+}
   
   canvas { 
     border: 2px solid #333;
